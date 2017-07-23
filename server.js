@@ -39,21 +39,21 @@ app.route('/')
     })
 
 app.get("/:date", function(req, res) {
-  var date, obj = {}; 
+  var date, obj = {unix: null, natural: null};
   var param = req.params.date;
-  if (Number(param)) {
+  
+  if (validDate(param)) {
+    date = new Date(param);
+  } else if (validDate(Number(param))) {
     date = new Date(Number(param));
-    obj.unix = date.getTime();
-    obj.natural = parseDate(date);
-  } else if ((date = new Date(param)).toString() !== "Invalid Date") {
-    obj.unix = date.getTime();
-    obj.natural = parseDate(date);
-  } else {
-    obj.unix = null;
-    obj.natural = null;
   }
-
-  res.json(obj);
+  
+  try {
+    obj.unix = date.getTime();
+    obj.natural = parseDate(date);
+  } finally {
+    res.json(obj);
+  }
 });
 
 // Respond not found to all the wrong routes
@@ -75,14 +75,15 @@ app.listen(process.env.PORT, function () {
   console.log('Node.js listening ...');
 });
 
+// Helper Functions
 function parseDate(date) {
   var monthNames = ["January", "February", "March", "April",
                    "May", "June", "July", "August", "September",
                    "October", "November", "December"];
-  var day = date.getDate();
-  var month = monthNames[date.getMonth()];
-  var year = date.getFullYear();
-  return `${month} ${day}, ${year}`;
+  
+  return `${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
-
+function validDate(date) {
+  return new Date(date).toString() !== "Invalid Date";
+}
