@@ -7,6 +7,8 @@
 
 var fs = require('fs');
 var express = require('express');
+var helpers = require("./helpers.js");
+
 var app = express();
 
 if (!process.env.DISABLE_XORIGIN) {
@@ -39,20 +41,15 @@ app.route('/')
     })
 
 app.get("/:date", function(req, res) {
-  var date, obj = {unix: null, natural: null};
-  var param = req.params.date;
-  
-  if (validDate(param)) {
-    date = new Date(param);
-  } else if (validDate(Number(param))) {
-    date = new Date(Number(param));
-  }
+  var rawDate = req.params.date;
+  var readyDate = helpers.prepareDate(rawDate);
+  var dateObj = {unix: null, natural: null};
   
   try {
-    obj.unix = date.getTime();
-    obj.natural = parseDate(date);
+    dateObj.unix = readyDate.getTime();
+    dateObj.natural = helpers.parseDate(readyDate);
   } finally {
-    res.json(obj);
+    res.json(dateObj);
   }
 });
 
@@ -75,15 +72,3 @@ app.listen(process.env.PORT, function () {
   console.log('Node.js listening ...');
 });
 
-// Helper Functions
-function parseDate(date) {
-  var monthNames = ["January", "February", "March", "April",
-                   "May", "June", "July", "August", "September",
-                   "October", "November", "December"];
-  
-  return `${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-}
-
-function validDate(date) {
-  return new Date(date).toString() !== "Invalid Date";
-}
